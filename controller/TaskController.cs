@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-[Route("api/[controller]")]
+[Route("api/tasks")]
 [ApiController]
 public class TaskController : ControllerBase
 {
@@ -12,14 +12,25 @@ public class TaskController : ControllerBase
         _context = context;
     }
 
-    [HttpGet("")]
+    [HttpGet]
     public async Task<IActionResult> GetTasks()
     {
         var tasks = await _context.TaskItems.ToListAsync();
         return Ok(tasks);
     }
 
-    [HttpPost("")]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetTask(int id)
+    {
+        var task = await _context.TaskItems.FindAsync(id);
+        if (task == null)
+        {
+            return NotFound();
+        }
+        return Ok(task);
+    }
+
+    [HttpPost]
     public async Task<IActionResult> CreateTask(TaskItem taskItem)
     {
         _context.TaskItems.Add(taskItem);
@@ -68,6 +79,20 @@ public class TaskController : ControllerBase
         }
 
         _context.TaskItems.Remove(taskItem);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateTaskStatus(int id, [FromBody] TaskStatus statusUpdate)
+    {
+        var taskItem = await _context.TaskItems.FindAsync(id);
+        if (taskItem == null)
+        {
+            return NotFound();
+        }
+
+        taskItem.Status = statusUpdate;
         await _context.SaveChangesAsync();
         return NoContent();
     }
